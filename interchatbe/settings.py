@@ -44,7 +44,9 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
 
     # local apps
-    'interchat_app',
+    'users',
+    'requests',
+    'chats'
 ]
 
 MIDDLEWARE = [
@@ -86,6 +88,15 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     )
+}
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=90),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=90),
+    'ROTATE_REFRESH_TOKENS': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
 # Database
@@ -134,6 +145,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Media files (User-uploaded files like images)
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
