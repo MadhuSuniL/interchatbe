@@ -1,41 +1,77 @@
 from django.contrib.auth.models import User
-from rest_framework import serializers
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import serializers
 from .models import Profile
 
-class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    def validate(self, attrs):
-        data = super().validate(attrs)
 
-        # Customizing the response by adding extra fields
-        data.update({
-            'username': self.user.username,
-            'email': self.user.email,
-        })
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField(write_only=True)
 
+    def validate(self, data):
+        username = data.get("username")
+        password = data.get("password")
+
+        if username and password:
+            user = authenticate(username=username, password=password)
+
+            if user is None:
+                raise serializers.ValidationError("Invalid credentials.")
+
+            if not user.is_active:
+                raise serializers.ValidationError("User is inactive.")
+
+            data['user'] = user
+        else:
+            raise serializers.ValidationError("Must include 'username' and 'password'.")
+        # self.validated_data = data
         return data
+    
+
+    def get_tokens_data(self):
+        user = self.validated_data['user']
+        refresh = RefreshToken.for_user(user)
+        profile = Profile.objects.get(user = user)
+        profile_data = ProfileSerializer(profile, context = self.context).data
+        return {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'user_id': user.id,
+            'username': user.username,
+        }.update(profile_data)
+ 
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'password')
+        fields = ('username', 'password')
 
     def create(self, validated_data):
         user = User.objects.create_user(
             username=validated_data['username'],
-            email=validated_data['email'],
             password=validated_data['password']
         )
         return user
+
+    
 
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ['name', 'bio', 'profile_pic']
+
+    # def create(self, validated_data):
+    #     profile = Profile.objects.create_user(
+    #         name=validated_data['name'],
+    #         bio=validated_data['bio'],
+    #         profile_pic=validated_data['profile_pic']
+    #     )
+    #     return profile    
         
+    
 class UserSerializer(serializers.ModelSerializer):
     profile = ProfileSerializer()
 
