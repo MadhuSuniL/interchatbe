@@ -5,8 +5,9 @@ from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 from django.core.files.base import ContentFile
 
+
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, related_name = 'profile', on_delete=models.CASCADE)
     name = models.CharField(max_length=100, null=True)
     bio = models.TextField(max_length=500, null=True)
     profile_pic = models.ImageField(upload_to='profile_pics/', null=True)

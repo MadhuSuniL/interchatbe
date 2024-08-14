@@ -1,6 +1,6 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
-from .views import RegisterView, LoginView, ProfileView, UserSearchView, SimilarBioUsersView
+from .views import RegisterView, LoginView, ProfileView, UserSearchView, YouMightKnowAndLikeUsersView
 
 urlpatterns = [
     # Auth
@@ -11,6 +11,5 @@ urlpatterns = [
     
     # Explore Users
     path('search', UserSearchView.as_view(), name = 'users_search'),
-    path('similar-bio-search', SimilarBioUsersView.as_view(), name = 'similar-bio-search'),
-    # path('search', UserSearchView.as_view(), name = ' users_search'),
+    path('similar-bio-search', YouMightKnowAndLikeUsersView.as_view(), name = 'similar-bio-search'),
 ]

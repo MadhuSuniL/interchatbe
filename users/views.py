@@ -1,6 +1,6 @@
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
-from django.db.models import Q
+from django.db.models import Q, Count
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
 from rest_framework import serializers
@@ -10,35 +10,52 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import RegisterSerializer, LoginSerializer, ProfileSerializer
 from django.contrib.auth.models import User
 from .models import Profile
+from chats.models import Friend
 from .utils import cosine_similarity
-
+import networkx as nx
+import matplotlib.pyplot as plt
 
 ##############################################################################################
 ####################################### EXPLORE USERS #################################################
 ##############################################################################################
 
-class SimilarBioUsersView(APIView):
+        
+
+        
+    
+class YouMightKnowAndLikeUsersView(APIView):
     permission_classes = [IsAuthenticated]
+    G = nx.Graph()
+
+    def suggest_friends(self, user):
+        # friends_objs = Friend.objects.all()
+        # for obj in friends_objs:
+        #      G.add_edge(obj.user, obj.friend)
+        return []
 
     def get(self, request, *args, **kwargs):
         # Get the current user's bio
         current_user_bio = Profile.objects.get(user = request.user).bio
 
         # Initialize an empty list to hold similar users
-        similar_users = []
+        might_know_users = []
 
         # Iterate over all profiles to calculate similarity
         for profile in Profile.objects.exclude(user=request.user):
             try:
                 similarity = cosine_similarity(current_user_bio, profile.bio)
                 if similarity >= 0.5:  # 50% or more similarity
-                    similar_users.append(profile)
+                    might_know_users.append(profile)
             except:
                 pass
+        
+        suggested_friends = self.suggest_friends(request.user)
+        for suggest_friend in suggested_friends:
+            if suggest_friend not in might_know_users:
+                might_know_users.append(suggest_friend)
 
-        # Serialize the similar profiles
-        serializer = ProfileSerializer(Profile.objects.all(), many=True, context = {'request' : request})
-        # serializer = ProfileSerializer(similar_users, many=True)
+        # Serialize the profiles
+        serializer = ProfileSerializer(might_know_users, many=True, context = {'request' : request})
         return Response(serializer.data)
 
 class UserSearchView(APIView):
@@ -49,8 +66,8 @@ class UserSearchView(APIView):
         if query:
             profiles = Profile.objects.filter(
                 Q(user__username__icontains=query) | 
-                Q(name__icontains=query)
-            )
+                Q(name__icontains=query) 
+            ).exclude(user = request.user)
             serializer = ProfileSerializer(profiles, many=True)
             return Response(serializer.data, status=200)
         return Response({"detail": "No query provided."}, status=400)

@@ -3,6 +3,7 @@ from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import serializers
 from .models import Profile
+from requests.models import FriendRequest
 
 
 class LoginSerializer(serializers.Serializer):
@@ -56,28 +57,11 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         return user
 
-    
-
-class ProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Profile
-        fields = ['name', 'bio', 'profile_pic']
-
-    # def create(self, validated_data):
-    #     profile = Profile.objects.create_user(
-    #         name=validated_data['name'],
-    #         bio=validated_data['bio'],
-    #         profile_pic=validated_data['profile_pic']
-    #     )
-    #     return profile    
-        
-    
 class UserSerializer(serializers.ModelSerializer):
-    profile = ProfileSerializer()
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'profile']
+        fields = ['id', 'username']
 
     def update(self, instance, validated_data):
         # Extract nested profile data
@@ -96,3 +80,32 @@ class UserSerializer(serializers.ModelSerializer):
         profile.save()
 
         return instance
+    
+
+class ProfileSerializer(serializers.ModelSerializer):
+    is_friend = serializers.SerializerMethodField()
+    is_requested = serializers.SerializerMethodField()
+    user = UserSerializer()
+
+    def get_is_friend(self, obj):
+        request = self.context['request']
+        current_user = request.user
+
+        if current_user.is_anonymous:
+            return None
+
+        return current_user.friends.filter(user=obj.user).exists()
+
+    def get_is_requested(self, obj):
+        request = self.context['request']
+        current_user = request.user
+
+        if current_user.is_anonymous:
+            return None
+
+        return FriendRequest.objects.filter(from_user=current_user, to_user=obj.user).exists()
+
+    class Meta:
+        model = Profile
+        fields = ['name', 'bio', 'profile_pic', 'is_friend', 'is_requested', 'user']
+    
