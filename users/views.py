@@ -55,22 +55,22 @@ class YouMightKnowAndLikeUsersView(APIView):
                 might_know_users.append(suggest_friend)
 
         # Serialize the profiles
-        serializer = ProfileSerializer(might_know_users, many=True, context = {'request' : request})
+        serializer = ProfileSerializer(Profile.objects.exclude(user=request.user), many=True, context = {'request' : request})
         return Response(serializer.data)
 
 class UserSearchView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        query = request.query_params.get('search', '')
+        query = request.query_params.get('query')
         if query:
             profiles = Profile.objects.filter(
                 Q(user__username__icontains=query) | 
                 Q(name__icontains=query) 
             ).exclude(user = request.user)
-            serializer = ProfileSerializer(profiles, many=True)
+            serializer = ProfileSerializer(profiles, many=True, context = {'request' : request})
             return Response(serializer.data, status=200)
-        return Response({"detail": "No query provided."}, status=400)
+        return Response([], status=200)
 
 ##############################################################################################
 ####################################### AUTH #################################################

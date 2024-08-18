@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.db.models import Q
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import serializers
@@ -58,6 +59,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 class UserSerializer(serializers.ModelSerializer):
+    
 
     class Meta:
         model = User
@@ -94,7 +96,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         if current_user.is_anonymous:
             return None
 
-        return current_user.friends.filter(user=obj.user).exists()
+        return current_user.friends.filter(Q(user=obj.user) | Q(friend = obj.user)).exists()
 
     def get_is_requested(self, obj):
         request = self.context['request']
