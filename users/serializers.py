@@ -96,7 +96,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         if current_user.is_anonymous:
             return None
 
-        return current_user.friends.filter(Q(user=obj.user) | Q(friend = obj.user)).exists()
+        return current_user.friends.filter(Q(user=obj.user) | Q(friend = obj.user)).exists() or current_user.friend_of.filter(Q(user=obj.user) | Q(friend = obj.user)).exists() 
 
     def get_is_requested(self, obj):
         request = self.context['request']
