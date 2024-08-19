@@ -89,7 +89,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     is_friend = serializers.SerializerMethodField()
     is_requested = serializers.SerializerMethodField()
     total_friends = serializers.SerializerMethodField()
-    user = UserSerializer()
+    user = UserSerializer(read_only = True)
 
     def get_is_friend(self, obj):
         try:
