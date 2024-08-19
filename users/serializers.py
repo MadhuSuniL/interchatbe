@@ -4,6 +4,7 @@ from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import serializers
 from .models import Profile
+from chats.models import Friend
 from requests.models import FriendRequest
 
 
@@ -87,11 +88,16 @@ class UserSerializer(serializers.ModelSerializer):
 class ProfileSerializer(serializers.ModelSerializer):
     is_friend = serializers.SerializerMethodField()
     is_requested = serializers.SerializerMethodField()
+    total_friends = serializers.SerializerMethodField()
     user = UserSerializer()
 
     def get_is_friend(self, obj):
-        request = self.context['request']
-        current_user = request.user
+        try:
+            request = self.context['request']
+            current_user = request.user
+        except KeyError :
+            current_user = self.context['user']
+            
 
         if current_user.is_anonymous:
             return None
@@ -99,15 +105,24 @@ class ProfileSerializer(serializers.ModelSerializer):
         return current_user.friends.filter(Q(user=obj.user) | Q(friend = obj.user)).exists() or current_user.friend_of.filter(Q(user=obj.user) | Q(friend = obj.user)).exists() 
 
     def get_is_requested(self, obj):
-        request = self.context['request']
-        current_user = request.user
+        try:
+            request = self.context['request']
+            current_user = request.user
+        except KeyError :
+            current_user = self.context['user']
+
 
         if current_user.is_anonymous:
             return None
 
         return FriendRequest.objects.filter(from_user=current_user, to_user=obj.user).exists()
 
+    def get_total_friends(self, obj):
+        user = obj.user
+        return Friend.objects.filter(Q(user = user) | Q(friend = user)).count()
+        
+
     class Meta:
         model = Profile
-        fields = ['name', 'bio', 'profile_pic', 'is_friend', 'is_requested', 'user']
+        fields = ['name', 'bio', 'profile_pic', 'is_friend', 'is_requested', 'user', 'total_friends']
     

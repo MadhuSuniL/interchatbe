@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-+^d=vrv3t!gtqooy_&j@so(mf7d!r_p_j(3gw^g!e8abhg39*(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -65,6 +65,9 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173'
 ]
+
+# CORS_ALLOW_ALL_ORIGINS = True
+
 
 ROOT_URLCONF = 'interchatbe.urls'
 
@@ -151,7 +154,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'
 
 USE_I18N = True
 
@@ -167,7 +170,7 @@ STATIC_URL = 'static/'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-
+MEDIA_DOMAIN = 'http://localhost:8000'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

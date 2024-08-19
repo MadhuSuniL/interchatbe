@@ -2,7 +2,6 @@ import django.conf.urls.static
 from helper.consumers import BaseAsyncJsonWebsocketConsumer
 from channels.db import database_sync_to_async
 from .models import Friend, Message
-from interchatbe.settings import CHANNEL_LAYERS
 from .serializers import ChatSerializer, MessageSerializer
 
 class ChatConsumer(BaseAsyncJsonWebsocketConsumer):
@@ -43,6 +42,7 @@ class ChatConsumer(BaseAsyncJsonWebsocketConsumer):
         if close_code == 4403:
             await self.send_json({"error": "User not found"})
         
+
         
 class MessageConsumer(BaseAsyncJsonWebsocketConsumer):
     groups = []
@@ -52,22 +52,7 @@ class MessageConsumer(BaseAsyncJsonWebsocketConsumer):
         chat = Friend.objects.get(uiid = self.chat_uiid)
         self.chat = chat
        
-    @database_sync_to_async 
-    def connect_user_to_chat(self):
-        self.chat.connected_users.add(self.user)
-        self.chat.is_active = bool(self.chat.connected_users.count())
-        self.chat.save()
-        # chagning user messages to seen
-        messages = self.chat.chat_messages.exclude(user = self.user, status = MESSAGE_STATUS_3)
-        if messages.exists():  # use exists() instead of count() for performance
-            messages.update(status=MESSAGE_STATUS_3)
-              
-    @database_sync_to_async         
-    def disconnect_user_to_chat(self):
-        self.chat.connected_users.remove(self.user)
-        self.chat.is_active = bool(self.chat.connected_users.count())
-        self.chat.save()
-                                      
+
     async def connect(self):
         if await self.user_connect():
             chat_uiid = self.scope.get('url_route').get('kwargs').get('chat_uiid')
@@ -81,6 +66,7 @@ class MessageConsumer(BaseAsyncJsonWebsocketConsumer):
 
         
     async def receive_json(self, content, **kwargs):
+        print(content)
         event_type = content.get('event_type')
         event_data = content.get('event_data')
         if event_type is None or event_data is None:
@@ -164,11 +150,9 @@ class MessageConsumer(BaseAsyncJsonWebsocketConsumer):
           
     async def add_user_to_group(self, group = None):
         await self.channel_layer.group_add(group if group else self.group, self.channel_name)
-        await self.connect_user_to_chat()
         
     async def remove_user_to_group(self,  group = None):
         await self.channel_layer.group_discard(group if group else self.group, self.channel_name)
-        await self.disconnect_user_to_chat()
 
     async def send_user_chat_msgs_data(self, event):
         await self.send_json(content = event['data'])    
@@ -176,7 +160,8 @@ class MessageConsumer(BaseAsyncJsonWebsocketConsumer):
     async def disconnect(self, close_code):
         if close_code == 4403:
             await self.send_json({"error": "User not found"})
-        await self.remove_user_to_group()
+        if self.user:
+            await self.remove_user_to_group()
         
         
         

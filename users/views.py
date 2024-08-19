@@ -135,6 +135,13 @@ class RegisterView(APIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)        
 
+class SelfProfile(APIView):
+    
+    def get(self, request):
+        profile = request.user.profile
+        data = ProfileSerializer(profile, context = {"request" : request}).data
+        return Response(data)
+
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
 

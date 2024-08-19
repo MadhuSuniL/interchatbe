@@ -25,7 +25,7 @@ class WsAuthMiddleware:
             access_token = AccessToken(token)
             payload = access_token.payload
             access_token.verify()
-            # print('payload : ', payload)
+            print('payload : ', payload)
             return await get_user(payload.get('user_id'))
         except Exception as e:
             print(e)

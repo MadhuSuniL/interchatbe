@@ -1,5 +1,5 @@
 from django.urls import path
-from .consumers import ChatConsumer, MessageConsumer
+from .consumers import MessageConsumer
 
 urlpatterns = [
     # path('ws/chats', ChatConsumer.as_asgi()),
